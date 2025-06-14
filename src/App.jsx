@@ -2,9 +2,9 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 
-import ExploreGigsPage from './Pages/ExploreGigsPage';
 import Home from './pages/Home';
 import PostGigPage from './pages/PostGigPage';
+import ExploreGigsPage from './Pages/ExploreGigsPage';
 
 function App() {
   return (
