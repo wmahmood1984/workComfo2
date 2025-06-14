@@ -1,6 +1,6 @@
 // src/pages/ExploreGigsPage.jsx
 
-export default function ExploreGigsPage() {
+export default function ExploreGig() {
   const gigs = [
     {
       title: "Build a Web3 Landing Page",

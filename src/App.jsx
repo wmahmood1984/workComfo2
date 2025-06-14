@@ -4,7 +4,9 @@ import Navbar from './components/Navbar';
 
 import Home from './pages/Home';
 import PostGigPage from './pages/PostGigPage';
-import ExploreGigsPage from './Pages/ExploreGigsPage';
+import ExploreGig from './pages/ExploreGig';
+
+
 
 function App() {
   return (
@@ -13,7 +15,7 @@ function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/explore" element={<ExploreGigsPage />} />
+          <Route path="/explore" element={<ExploreGig />} />
           <Route path="/post" element={<PostGigPage />} />
           {/* Future: <Route path="/post" element={<PostGigPage />} /> */}
         </Routes>
