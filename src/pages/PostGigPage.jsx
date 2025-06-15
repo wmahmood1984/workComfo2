@@ -1,5 +1,8 @@
 // src/pages/PostGigPage.jsx
 import { useState } from "react";
+import { db } from '../lib/firebase';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
+
 
 export default function PostGigPage() {
   const [form, setForm] = useState({
@@ -13,13 +16,24 @@ export default function PostGigPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // 🔗 TODO: Upload to IPFS + call contract
-    console.log("Gig submitted:", form);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const gig = {
+    ...form,
+    created_at: Timestamp.now(),
+    status: "open"
+  };
+
+  try {
+    await addDoc(collection(db, "gigs"), gig);
     alert("Gig submitted successfully!");
     setForm({ title: "", description: "", budget: "", deadline: "" });
-  };
+  } catch (err) {
+    console.error("Error posting gig:", err);
+    alert("Something went wrong");
+  }
+};
 
   return (
     <div className="min-h-screen px-6 py-10 bg-gray-100 flex justify-center">

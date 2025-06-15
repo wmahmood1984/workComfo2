@@ -1,20 +1,21 @@
 // src/pages/ExploreGigsPage.jsx
+import { useEffect, useState } from "react";
+import { db } from '../lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+
 
 export default function ExploreGig() {
-  const gigs = [
-    {
-      title: "Build a Web3 Landing Page",
-      budget: "0.5 BNB",
-      shortDesc: "I need a React landing page with wallet connect and IPFS hosting.",
-      status: "Open",
-    },
-    {
-      title: "Create NFT Minting DApp",
-      budget: "1.2 BNB",
-      shortDesc: "A simple NFT drop site with whitelist support.",
-      status: "Open",
-    },
-  ];
+
+    const [gigs, setGigs] = useState([]);
+
+     useEffect(() => {
+    const fetchGigs = async () => {
+      const snapshot = await getDocs(collection(db, "gigs"));
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setGigs(data);
+    };
+    fetchGigs();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 px-6 py-10">
