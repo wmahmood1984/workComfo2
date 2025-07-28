@@ -1,0 +1,54 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.30;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract escrow is Ownable {
+    constructor() Ownable(msg.sender) {}
+
+       struct Order {
+        address buyer;
+        address seller;
+        string  orderId;
+        uint amount; 
+        uint deadline;
+        bool ended;
+        uint256 createdAt;
+        uint256 amountDeposited;
+        bool acceptedbyBuyer;
+        uint acceptedAt;
+
+    }
+
+    uint public ownerCommission = 2;
+
+    mapping (string => Order) public OrderMapping;
+
+    function orderBooking(Order memory _order) public payable {
+        require(OrderMapping[_order.orderId].deadline==0,"Order already booked");
+        require(_order.amountDeposited == msg.value, "amount mismatch");
+        OrderMapping[_order.orderId] = _order;
+        uint commission = msg.value * ownerCommission / 100; 
+        payable(owner()).transfer(commission);
+        OrderMapping[_order.orderId].createdAt=block.timestamp;
+        OrderMapping[_order.orderId].amountDeposited -= commission;
+
+    }
+
+    function orderAcceptance( string memory _id) public {
+        require(OrderMapping[_id].buyer==msg.sender,"you are not buyer");
+        OrderMapping[_id].acceptedbyBuyer = true;
+    }
+
+    function withdrawMoney(string memory _id) public {
+        require(OrderMapping[_id].acceptedbyBuyer==true,"Order not yet accepted");
+        require(OrderMapping[_id].ended==false,"order has been completed");
+        OrderMapping[_id].ended=true;
+        payable(OrderMapping[_id].seller).transfer(OrderMapping[_id].amountDeposited);
+        OrderMapping[_id].amountDeposited=0;
+    }
+
+
+     
+
+}

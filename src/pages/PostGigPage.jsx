@@ -2,9 +2,12 @@
 import { useState } from "react";
 import { db } from '../lib/firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
-
-
+import { useAuth } from "../hooks/useAuth";
+import toast from "react-hot-toast";
 export default function PostGigPage() {
+
+  const user = useAuth();
+
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -27,13 +30,15 @@ const handleSubmit = async (e) => {
 
   try {
     await addDoc(collection(db, "gigs"), gig);
-    alert("Gig submitted successfully!");
+    toast.success("Gig submitted successfully!");
     setForm({ title: "", description: "", budget: "", deadline: "" });
   } catch (err) {
     console.error("Error posting gig:", err);
-    alert("Something went wrong");
+    toast.error("Something went wrong");
   }
 };
+
+if (!user) return <p className="text-center mt-10">Please log in to post a gig.</p>;
 
   return (
     <div className="min-h-screen px-6 py-10 bg-gray-100 flex justify-center">

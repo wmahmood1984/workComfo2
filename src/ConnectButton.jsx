@@ -5,7 +5,7 @@ export default function ConnectButton() {
     const {disconnect} = useDisconnect()
 
     const { address, isConnected, caipAddress, status } = useAppKitAccount()
-    console.log("first",isConnected)
+  
     
     return (
         <>
@@ -22,7 +22,7 @@ export default function ConnectButton() {
                 
              
             >
-               {isConnected ? `${address.slice(0,4)}...${address.slice(-5)}` : "Not connected"}
+               {isConnected ? `${address.slice(0,4)}...${address.slice(-5)}` : "Wallet Connect"}
    
             </button>
             
