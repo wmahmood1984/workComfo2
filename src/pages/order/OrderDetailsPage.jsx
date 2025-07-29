@@ -8,6 +8,7 @@ import { useConfig } from "wagmi";
 import { subscriptionContract } from "../../config";
 import toast from "react-hot-toast";
 import ChatWindow from "../../components/ChatWindow";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 export default function OrderDetailsPage() {
   const config = useConfig();
@@ -59,6 +60,13 @@ export default function OrderDetailsPage() {
   const handleAcceptWork = async () => {
     setSubmitting(true);
     try {
+      const acceptedDate = new Date();
+      const clearanceDate = new Date(acceptedDate);
+      clearanceDate.setDate(clearanceDate.getDate() + 7); // 7 days after acceptance
+      const price = Number(order.packageDetails?.price || 0);
+      const adminFee = price * 0.05;
+      const sellerEarnings = price - adminFee;
+
       if (order.cryptoEnabled) {
         let subscribeHash = await writeContract(config, {
           ...subscriptionContract,
@@ -66,14 +74,31 @@ export default function OrderDetailsPage() {
           args: [orderId],
         });
         await waitForTransactionReceipt(config, { hash: subscribeHash });
-        await updateDoc(doc(db, "orders", order.id), {
-          status: "Accepted but not paid",
-        });
-      } else {
-        await updateDoc(doc(db, "orders", order.id), {
-          status: "Accepted but not paid",
-        });
       }
+
+      // Update order status
+      await updateDoc(doc(db, "orders", order.id), {
+        status: "Accepted but not paid",
+      });
+
+      // Add to seller earnings
+      await addDoc(collection(db, "earnings"), {
+        sellerId: order.sellerId,
+        orderId: order.id,
+        amount: sellerEarnings,
+        acceptedDate: acceptedDate,
+        clearanceDate: clearanceDate,
+        createdAt: serverTimestamp(),
+      });
+
+      // Add to admin fees
+      await addDoc(collection(db, "adminFees"), {
+        orderId: order.id,
+        feeAmount: adminFee,
+        acceptedDate: acceptedDate,
+        createdAt: serverTimestamp(),
+      });
+
       toast.success("Order accepted successfully");
       setSubmitting(false);
     } catch (error) {
@@ -92,13 +117,22 @@ export default function OrderDetailsPage() {
           Order ID: {order.id}
         </h1>
 
-        <div className="flex items-center bg-white p-6 mb-6 rounded-lg shadow" style={{ height: "150px" }}>
-          <div className="w-2/5 text-xl font-semibold text-gray-700">Title:</div>
-          <div className="w-3/5 text-xl font-bold text-gray-900">{order.gigTitle}</div>
+        <div
+          className="flex items-center bg-white p-6 mb-6 rounded-lg shadow"
+          style={{ height: "150px" }}
+        >
+          <div className="w-2/5 text-xl font-semibold text-gray-700">
+            Title:
+          </div>
+          <div className="w-3/5 text-xl font-bold text-gray-900">
+            {order.gigTitle}
+          </div>
         </div>
 
         <div className="bg-white p-6 mb-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">Description</h2>
+          <h2 className="text-lg font-semibold text-gray-700 mb-2">
+            Description
+          </h2>
           <p className="text-gray-800 text-base whitespace-pre-wrap">
             {order.packageDetails?.description || "No description provided."}
           </p>
@@ -111,17 +145,35 @@ export default function OrderDetailsPage() {
           </div>
           <div className="bg-white p-4 rounded shadow text-center">
             <p className="text-sm text-gray-500">Deadline</p>
-            <p className="text-lg font-bold">{order.packageDetails?.days} days</p>
+            <p className="text-lg font-bold">
+              {order.packageDetails?.days} days
+            </p>
           </div>
           <div className="bg-white p-4 rounded shadow text-center">
             <p className="text-sm text-gray-500">Started At</p>
-            <p className="text-lg font-bold">{new Date(order.createdAt?.seconds * 1000).toLocaleDateString()}</p>
+            <p className="text-lg font-bold">
+              {new Date(order.createdAt?.seconds * 1000).toLocaleDateString()}
+            </p>
           </div>
-          <Link to={user.uid === order.buyerId ? `/dashboard/${user.uid}` : `/profileshowcase/${order.buyerId}`} className="bg-white p-4 rounded shadow text-center">
+          <Link
+            to={
+              user.uid === order.buyerId
+                ? `/dashboard/${user.uid}`
+                : `/profileshowcase/${order.buyerId}`
+            }
+            className="bg-white p-4 rounded shadow text-center"
+          >
             <p className="text-sm text-gray-500">Buyer</p>
             <p className="text-lg font-bold">{buyerProfile?.firstName}</p>
           </Link>
-          <Link to={user.uid === order.sellerId ? `/dashboard/${user.uid}` : `/profileshowcase/${order.sellerId}`} className="bg-white p-4 rounded shadow text-center">
+          <Link
+            to={
+              user.uid === order.sellerId
+                ? `/dashboard/${user.uid}`
+                : `/profileshowcase/${order.sellerId}`
+            }
+            className="bg-white p-4 rounded shadow text-center"
+          >
             <p className="text-sm text-gray-500">Seller</p>
             <p className="text-lg font-bold">{sellerProfile?.firstName}</p>
           </Link>
@@ -143,7 +195,12 @@ export default function OrderDetailsPage() {
         {/* Chat Section */}
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4">Chat</h2>
-          <ChatWindow orderId={order.id} buyerId={order.buyerId} sellerId={order.sellerId} currentUserId={user.uid} />
+          <ChatWindow
+            orderId={order.id}
+            buyerId={order.buyerId}
+            sellerId={order.sellerId}
+            currentUserId={user.uid}
+          />
         </div>
       </div>
 
@@ -158,20 +215,29 @@ export default function OrderDetailsPage() {
             onClick={handleSubmitWork}
             disabled={order.status === "submitted"}
             className={`w-full py-2 px-4 rounded mb-4 transition
-              ${order.status === "submitted" ? "bg-gray-400 text-white cursor-not-allowed" : "bg-green-600 text-white hover:bg-green-700 cursor-pointer"}`}
+              ${
+                order.status === "submitted"
+                  ? "bg-gray-400 text-white cursor-not-allowed"
+                  : "bg-green-600 text-white hover:bg-green-700 cursor-pointer"
+              }`}
           >
-            {submitting ? "Submitting" : order.status === "submitted" ? "Work Submitted" : "Submit Work"}
+            {submitting
+              ? "Submitting"
+              : order.status === "submitted"
+              ? "Work Submitted"
+              : "Submit Work"}
           </button>
         )}
 
-        {user.uid === order.buyerId && order.status !== "Accepted but not paid" && (
-          <button
-            onClick={handleAcceptWork}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded mb-4 cursor-pointer"
-          >
-            {submitting ? "Accepting..." : "Accept Work"}
-          </button>
-        )}
+        {user.uid === order.buyerId &&
+          order.status !== "Accepted but not paid" && (
+            <button
+              onClick={handleAcceptWork}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded mb-4 cursor-pointer"
+            >
+              {submitting ? "Accepting..." : "Accept Work"}
+            </button>
+          )}
 
         <button className="w-full bg-red-500 text-white py-2 px-4 rounded cursor-pointer">
           Raise Conflict

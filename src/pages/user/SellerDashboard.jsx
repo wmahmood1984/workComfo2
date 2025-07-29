@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import OrderSummaryPage from "../order/OrderSummaryPage";
+import toast from "react-hot-toast";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -14,32 +15,80 @@ const Sellerdashboard = () => {
   const [user, setUser] = useState(null);
   const [gigs, setGigs] = useState([]);
   const [orders, setOrders] = useState({ current: [], completed: [] });
-  const [earnings, setEarnings] = useState({ total: 0, thisMonth: 0, available: 0, pending: 0, withdrawn: 0 });
+  const [earnings, setEarnings] = useState({
+    total: 0,
+    thisMonth: 0,
+    available: 0,
+    pending: 0,
+    withdrawn: 0
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-        
       try {
         // Fetch user details
         const userRef = doc(db, "users", userId);
         const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          setUser(userSnap.data());
-        }
+        if (userSnap.exists()) setUser(userSnap.data());
 
-        
-
-        // Fetch gigs for the user
+        // Fetch gigs
         const gigsRef = collection(db, "gigs");
         const gigsQuery = query(gigsRef, where("userId", "==", userId));
         const gigsSnapshot = await getDocs(gigsQuery);
-        const gigsList = gigsSnapshot.docs.map(doc => doc.data());
+        const gigsList = gigsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         setGigs(gigsList);
 
-        // Placeholder data for orders and earnings
-        setOrders({ current: [], completed: [] });
-        setEarnings({ total: 0, thisMonth: 0, available: 0, pending: 0, withdrawn: 0 });
+        // Fetch earnings
+        const earningsRef = collection(db, "earnings");
+        const earningsQuery = query(earningsRef, where("sellerId", "==", userId));
+        const earningsSnap = await getDocs(earningsQuery);
+
+        let total = 0;
+        let thisMonth = 0;
+        let available = 0;
+        let pending = 0;
+        let withdrawnThisMonth = 0;
+
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        earningsSnap.docs.forEach((doc) => {
+          const data = doc.data();
+          const amount = Number(data.amount) || 0;
+          const acceptedDate = data.acceptedDate?.toDate ? data.acceptedDate.toDate() : new Date(data.acceptedDate);
+          const clearanceDate = data.clearanceDate?.toDate ? data.clearanceDate.toDate() : new Date(data.clearanceDate);
+          const withdrawn = data.withdrawn || false;
+          const withdrawnDate = data.withdrawnDate?.toDate ? data.withdrawnDate.toDate() : null;
+
+          total += amount;
+
+          // This month's accepted earnings
+          if (acceptedDate.getMonth() === currentMonth && acceptedDate.getFullYear() === currentYear) {
+            thisMonth += amount;
+          }
+
+          // Check if cleared
+          if (clearanceDate <= now && !withdrawn) {
+            available += amount;
+          } else if (!withdrawn) {
+            pending += amount;
+          }
+
+          // Withdrawn this month
+          if (withdrawn && withdrawnDate && withdrawnDate.getMonth() === currentMonth && withdrawnDate.getFullYear() === currentYear) {
+            withdrawnThisMonth += amount;
+          }
+        });
+
+        setEarnings({
+          total,
+          thisMonth,
+          available,
+          pending,
+          withdrawn: withdrawnThisMonth
+        });
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -49,6 +98,12 @@ const Sellerdashboard = () => {
 
     if (userId) fetchData();
   }, [userId]);
+
+  const handleWithdraw = async () => {
+    if (earnings.available <= 0) return;
+    toast.success(`Withdrawal request for $${earnings.available} sent!`);
+    // Later: Update Firestore (mark withdrawn + set withdrawnDate), trigger payment
+  };
 
   if (loading) return <div className="p-10 text-center">Loading...</div>;
   if (!user) return <div className="p-10 text-center">User not found.</div>;
@@ -101,7 +156,7 @@ const Sellerdashboard = () => {
         {/* Orders Section */}
         <section>
           <h2 className="text-2xl font-bold mb-4">Orders</h2>
-      <OrderSummaryPage/>
+          <OrderSummaryPage/>
         </section>
 
         {/* Earnings Section */}
@@ -129,6 +184,17 @@ const Sellerdashboard = () => {
               <h3 className="text-xl font-bold">${earnings.withdrawn}</h3>
             </div>
           </div>
+          <button
+            onClick={handleWithdraw}
+            disabled={earnings.available <= 0}
+            className={`mt-6 w-48 py-2 px-4 rounded ${
+              earnings.available <= 0
+                ? "bg-gray-400 text-white cursor-not-allowed"
+                : "bg-green-600 text-white hover:bg-green-700"
+            }`}
+          >
+            Withdraw
+          </button>
         </section>
 
         {/* Geo Map */}
