@@ -1,30 +1,32 @@
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { doc, setDoc } from "firebase/firestore";
-import { db } from "../../lib/firebase"; // adjust this path to your config
-import toast from 'react-hot-toast';
+import { db } from "../../lib/firebase";
+import toast from "react-hot-toast";
 
 const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
-const CompleteProfileForm = ({  }) => {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const {userid,email} = location.state || {}
+const CompleteProfileForm = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { userid, email } = location.state || {};
+  const [loading, setLoading] = useState(false); // <-- New loading state
   const [formData, setFormData] = useState({
     userid,
     email,
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    dateOfBirth: '',
-    address: '',
-    city: '',
-    country: '',
-    phoneNumber: '',
-    gender: '',
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    dateOfBirth: "",
+    address: "",
+    city: "",
+    country: "",
+    phoneNumber: "",
+    gender: "",
     profilePicture: null,
-    level:"newbie"
+    level: "newbie",
+    profileType: "Buyer", // default selection
   });
 
   const handleChange = (e) => {
@@ -36,57 +38,59 @@ const CompleteProfileForm = ({  }) => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    setLoading(true); // Start loading
 
-  try {
-    const userId = formData.userid || localStorage.getItem("userUid");
+    try {
+      const userId = formData.userid || localStorage.getItem("userUid");
+      if (!userId) {
+        alert("User ID not found.");
+        return;
+      }
 
-    if (!userId) {
-      alert("User ID not found.");
-      return;
+      let imageUrl = "";
+      if (formData.profilePicture) {
+        const imageData = new FormData();
+        imageData.append("file", formData.profilePicture);
+        imageData.append("upload_preset", uploadPreset);
+
+        const res = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          { method: "POST", body: imageData }
+        );
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error?.message || "Upload failed");
+
+        imageUrl = data.secure_url;
+      }
+
+      const { profilePicture, ...userData } = formData;
+      userData.profilePictureUrl = imageUrl;
+      userData.isProfileComplete = true;
+
+      const userRef = doc(db, "users", userId);
+      await setDoc(userRef, userData, { merge: true });
+
+      toast.success("Profile updated successfully!");
+      if (userData.profileType === "Seller") {
+        navigate(`/seller-dashboard/${userId}`);
+      } else {
+        navigate(`/buyer-dashboard/${userId}`);
+      }
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      toast.error("There was an error updating your profile.");
+    } finally {
+      setLoading(false); // Stop loading
     }
+  };
 
-    let imageUrl = "";
-    if (formData.profilePicture) {
-      const imageData = new FormData();
-      imageData.append("file", formData.profilePicture);
-      imageData.append("upload_preset", uploadPreset);
-
-      ;
-
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: "POST",
-        body: imageData
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message || "Upload failed");
-
-      imageUrl = data.secure_url;
-    }
-
-    // Prepare Firestore data
-    const { profilePicture, ...userData } = formData;
-    userData.profilePictureUrl = imageUrl;
-    userData.isProfileComplete = true;
-
-    const userRef = doc(db, "users", userId);
-    await setDoc(userRef, userData, { merge: true });
-
-    toast.success("Profile updated successfully!");
-    navigate(`/dashboard/${userId}`)
-
-  } catch (error) {
-    console.error("Error saving profile:", error);
-    toast.error("There was an error updating your profile.");
-  }
-};
-
-
-
- return (
+  return (
     <div className="max-w-4xl mx-auto mt-10 p-10 bg-white shadow-xl rounded-lg border border-gray-200">
-      <h1 className="text-4xl font-bold mb-8 text-center text-blue-700">Complete Your Profile</h1>
+      <h1 className="text-4xl font-bold mb-8 text-center text-blue-700">
+        Complete Your Profile
+      </h1>
 
       <form onSubmit={handleSubmit} className="space-y-6 text-lg">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -169,6 +173,7 @@ const CompleteProfileForm = ({  }) => {
           />
         </div>
 
+        {/* Gender Selection */}
         <div className="flex flex-col gap-3 mt-6">
           <label className="font-medium text-gray-700">Gender:</label>
           <div className="flex gap-8 text-lg">
@@ -188,8 +193,31 @@ const CompleteProfileForm = ({  }) => {
           </div>
         </div>
 
+        {/* Profile Type Selection */}
+        <div className="flex flex-col gap-3 mt-6">
+          <label className="font-medium text-gray-700">Profile Type:</label>
+          <div className="flex gap-8 text-lg">
+            {["Buyer", "Seller", "Both"].map((type) => (
+              <label key={type} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="profileType"
+                  value={type}
+                  checked={formData.profileType === type}
+                  onChange={handleChange}
+                  required
+                />
+                {type}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Profile Picture */}
         <div className="mt-6">
-          <label className="block text-gray-700 font-medium mb-2">Upload Profile Picture</label>
+          <label className="block text-gray-700 font-medium mb-2">
+            Upload Profile Picture
+          </label>
           <input
             type="file"
             name="profilePicture"
@@ -200,11 +228,39 @@ const CompleteProfileForm = ({  }) => {
           />
         </div>
 
+        {/* Submit Button with Spinner */}
         <button
           type="submit"
-          className="w-full mt-10 bg-blue-600 text-white py-4 rounded text-xl font-semibold hover:bg-blue-700 transition"
+          disabled={loading}
+          className=" cursor-pointer w-full mt-10 bg-blue-600 text-white py-4 rounded text-xl font-semibold hover:bg-blue-700 transition disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          Save Profile
+          {loading ? (
+            <div className="flex justify-center items-center gap-2">
+              <svg
+                className="animate-spin h-6 w-6 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8z"
+                ></path>
+              </svg>
+              Submitting...
+            </div>
+          ) : (
+            "Save Profile"
+          )}
         </button>
       </form>
     </div>

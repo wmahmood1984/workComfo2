@@ -9,7 +9,7 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-const Dashboard = () => {
+const Sellerdashboard = () => {
   const { userId } = useParams();
   const [user, setUser] = useState(null);
   const [gigs, setGigs] = useState([]);
@@ -145,4 +145,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Sellerdashboard;

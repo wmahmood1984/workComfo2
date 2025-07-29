@@ -83,7 +83,7 @@ export default function GigGallery({ formData, setFormData, onSubmit, onBack }) 
     await addDoc(collection(db, "gigs"), fullData);
 
     toast.success("Media uploaded and data saved!");
-    navigate(`/dashboard/${user.uid}`)
+    navigate(`/seller-dashboard/${user.uid}`)
   } catch (err) {
     console.error("Upload failed:", err);
     toast.error("Upload or Firestore save failed.");

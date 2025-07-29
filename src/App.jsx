@@ -11,13 +11,15 @@ import CreateGigWizard from "./pages/gig/CreateGigWizard";
 import CompleteProfileForm from "./pages/user/CreateProfile";
 import UserProfilePage from "./pages/user/UserProfilePage";
 import GigDetailsPage from "./pages/gig/Gigdetails";
-import Dashboard from "./pages/user/Dashboard";
+
 import Messages from "./pages/chat/Messages";
 import Checkout from "./pages/order/Checkout";
 import OrderConfirmation from "./pages/order/OrderConfirmation";
 import OrderDetailsPage from "./pages/order/OrderDetailsPage";
 import Showcaseprofile from "./pages/user/ShowcaseProfile";
 import Footer from "./components/Footer";
+import Buyerdashboard from "./pages/user/BuyerDashboard";
+import Sellerdashboard from "./pages/user/SellerDashboard";
 function App() {
   return (
     <Router>
@@ -33,7 +35,8 @@ function App() {
           <Route path="/complete-profile" element={<CompleteProfileForm />} />
           <Route path="/profile" element={<UserProfilePage />} />
           <Route path="/gig-details/:id" element={<GigDetailsPage />} />
-          <Route path="/dashboard/:userId" element={<Dashboard />} />
+          <Route path="/buyer-dashboard/:userId" element={<Buyerdashboard />} />
+          <Route path="/seller-dashboard/:userId" element={<Sellerdashboard />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/messages/:id" element={<Messages />} />
           <Route path="/checkout" element={<Checkout />} />

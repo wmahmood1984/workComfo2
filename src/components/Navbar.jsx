@@ -15,15 +15,17 @@ export default function Navbar() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationsWithNames, setNotificationsWithNames] = useState([]);
+  const [profileType, setProfileType] = useState(null);
+  const [activeRole, setActiveRole] = useState(
+    localStorage.getItem("activeRole") || "Buyer"
+  );
   const dropdownRef = useRef();
   const notificationsRef = useRef();
 
   const notifications = useUserNotifications(user?.uid);
-
-  // Get only unread notifications
   const unreadNotifications = notifications.filter((n) => !n.read);
 
-  // Fetch sender names
+  // Fetch sender names for notifications
   useEffect(() => {
     const fetchNames = async () => {
       if (!notifications.length) return;
@@ -32,7 +34,9 @@ export default function Navbar() {
           try {
             const userRef = doc(db, "users", n.fromUserId);
             const userSnap = await getDoc(userRef);
-            const senderName = userSnap.exists() ? userSnap.data().firstName || "Unknown" : "Unknown";
+            const senderName = userSnap.exists()
+              ? userSnap.data().firstName || "Unknown"
+              : "Unknown";
             return { ...n, senderName };
           } catch {
             return { ...n, senderName: "Unknown" };
@@ -43,6 +47,27 @@ export default function Navbar() {
     };
     fetchNames();
   }, [notifications]);
+
+  // Fetch user profileType
+  useEffect(() => {
+    if (!user) return;
+    const fetchProfileType = async () => {
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        setProfileType(data.profileType || "Buyer");
+        // Ensure active role defaults correctly
+        if (!localStorage.getItem("activeRole")) {
+          const defaultRole =
+            data.profileType === "Seller" ? "Seller" : "Buyer";
+          setActiveRole(defaultRole);
+          localStorage.setItem("activeRole", defaultRole);
+        }
+      }
+    };
+    fetchProfileType();
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -69,6 +94,7 @@ export default function Navbar() {
   const handleLogout = async () => {
     setShowDropdown(false);
     await signOut(auth);
+    navigate("/")
   };
 
   const toggleDropdown = () => setShowDropdown((prev) => !prev);
@@ -77,7 +103,6 @@ export default function Navbar() {
   const toggleNotifications = async () => {
     setShowNotifications((prev) => !prev);
     if (!showNotifications && unreadNotifications.length > 0) {
-      // Mark all as read
       await Promise.all(
         unreadNotifications.map(async (n) => {
           const notifRef = doc(db, "notifications", n.id);
@@ -93,13 +118,38 @@ export default function Navbar() {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setShowDropdown(false);
       }
-      if (notificationsRef.current && !notificationsRef.current.contains(e.target)) {
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(e.target)
+      ) {
         setShowNotifications(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Handle role switch
+  const handleRoleSwitch = () => {
+    const newRole = activeRole === "Buyer" ? "Seller" : "Buyer";
+    setActiveRole(newRole);
+    localStorage.setItem("activeRole", newRole);
+    toast.success(`Switched to ${newRole} view`);
+    navigate(`/${newRole.toLowerCase()}-dashboard/${user.uid}`); // Redirect immediately
+  };
+
+  // Navigate to dashboard based on role
+  const handleDashboardClick = () => {
+    const role =
+      profileType === "Seller"
+        ? "Seller"
+        : profileType === "Both"
+        ? activeRole
+        : "Buyer";
+    navigate(`/${role.toLowerCase()}-dashboard/${user.uid}`);
+  };
+
+  console.log("profile",profileType)
 
   return (
     <nav className="w-full flex justify-between items-center py-4 px-6 bg-white shadow relative">
@@ -111,16 +161,28 @@ export default function Navbar() {
         <Link to="/explore" className="text-gray-700 hover:text-green-600">
           Explore Gigs
         </Link>
+        {profileType === "Seller" && (
         <Link to="/post" className="text-gray-700 hover:text-green-600">
           Post a Gig
-        </Link>
+        </Link>)}
+
         {user && (
-          <Link
-            to={`/dashboard/${user.uid}`}
+          <button
+            onClick={handleDashboardClick}
             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 cursor-pointer"
           >
             Dashboard
-          </Link>
+          </button>
+        )}
+
+        {/* Role Switcher (only for Both) */}
+        {profileType === "Both" && (
+          <button
+            onClick={handleRoleSwitch}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 cursor-pointer"
+          >
+            Switch to {activeRole === "Buyer" ? "Seller" : "Buyer"}
+          </button>
         )}
 
         <ConnectButton />
