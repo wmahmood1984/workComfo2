@@ -5,6 +5,7 @@ import { collection, doc, getDoc, getDocs, query, where } from "firebase/firesto
 import { db } from "../../lib/firebase";
 import OrderSummaryPage from "../order/OrderSummaryPage";
 import toast from "react-hot-toast";
+import { writeBatch, serverTimestamp } from "firebase/firestore";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -14,6 +15,8 @@ const Sellerdashboard = () => {
   const { userId } = useParams();
   const [user, setUser] = useState(null);
   const [gigs, setGigs] = useState([]);
+  const [withdrawLoading,setWithdrawLoading] = useState(false)
+
   const [orders, setOrders] = useState({ current: [], completed: [] });
   const [earnings, setEarnings] = useState({
     total: 0,
@@ -97,13 +100,47 @@ const Sellerdashboard = () => {
     };
 
     if (userId) fetchData();
-  }, [userId]);
+  }, [userId,withdrawLoading]);
 
-  const handleWithdraw = async () => {
-    if (earnings.available <= 0) return;
-    toast.success(`Withdrawal request for $${earnings.available} sent!`);
-    // Later: Update Firestore (mark withdrawn + set withdrawnDate), trigger payment
-  };
+const handleWithdraw = async () => {
+  
+  if (earnings.available <= 0) return;
+
+  try {
+    setWithdrawLoading(true)
+    const earningsRef = collection(db, "earnings");
+    const q = query(
+      earningsRef,
+      where("sellerId", "==", userId),
+      where("withdrawn", "==", false)
+    );
+    const snap = await getDocs(q);
+
+    const batch = writeBatch(db);
+    const now = new Date();
+
+    snap.docs.forEach((docSnap) => {
+      const data = docSnap.data();
+      const clearanceDate = data.clearanceDate?.toDate ? data.clearanceDate.toDate() : new Date(data.clearanceDate);
+      if (clearanceDate <= now && !data.withdrawn) {
+        batch.update(doc(db, "earnings", docSnap.id), {
+          withdrawn: true,
+          withdrawnDate: serverTimestamp(),
+        });
+      }
+    });
+
+    await batch.commit();
+    toast.success(`Successfully withdrawn $${earnings.available}`);
+    setEarnings((prev) => ({ ...prev, available: 0 }));
+    setWithdrawLoading(false)
+  } catch (error) {
+    console.error("Withdrawal error:", error);
+    toast.error("Withdrawal failed. Try again.");
+    setWithdrawLoading(false)
+  }
+};
+
 
   if (loading) return <div className="p-10 text-center">Loading...</div>;
   if (!user) return <div className="p-10 text-center">User not found.</div>;
@@ -187,7 +224,7 @@ const Sellerdashboard = () => {
           <button
             onClick={handleWithdraw}
             disabled={earnings.available <= 0}
-            className={`mt-6 w-48 py-2 px-4 rounded ${
+            className={`mt-6 w-48 py-2 px-4 rounded cursor-pointer ${
               earnings.available <= 0
                 ? "bg-gray-400 text-white cursor-not-allowed"
                 : "bg-green-600 text-white hover:bg-green-700"
