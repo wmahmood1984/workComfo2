@@ -87,6 +87,7 @@ export default function Navbar() {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err) {
+      console.error("Login error:", err.response || err);
       toast.error("Login failed");
     }
   };
