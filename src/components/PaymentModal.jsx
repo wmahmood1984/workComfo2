@@ -1,23 +1,21 @@
-// PaymentModal.jsx
 import { useState } from "react";
 
-export default function PaymentModal({ open, onClose,paying }) {
+export default function PaymentModal({ open, onClose, paying }) {
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvc, setCvc] = useState("");
 
-  if (!open) return null; // nothing to render if the modal isn't open
+  if (!open) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // ── pretend a payment API call succeeds ──
-    onClose(true); // tell the parent: “paymentMade = true”
+    onClose(true);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-[90%] md:w-1/2 bg-white rounded-xl shadow-lg p-8">
-        <h2 className="text-2xl font-semibold mb-6 text-center">
+      <div className="w-full max-w-sm md:max-w-md bg-white rounded-xl shadow-lg p-4 md:p-8 mx-2 max-h-screen overflow-y-auto">
+        <h2 className="text-xl md:text-2xl font-semibold mb-6 text-center">
           Dummy Credit‑Card Payment
         </h2>
 
@@ -30,13 +28,13 @@ export default function PaymentModal({ open, onClose,paying }) {
             className="w-full border rounded-lg p-3 focus:outline-none focus:ring"
             required
           />
-          <div className="flex gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
             <input
               type="text"
               placeholder="MM/YY"
               value={expiry}
               onChange={(e) => setExpiry(e.target.value)}
-              className="flex-1 border rounded-lg p-3 focus:outline-none focus:ring"
+              className="w-full md:flex-1 border rounded-lg p-3 focus:outline-none focus:ring"
               required
             />
             <input
@@ -44,7 +42,7 @@ export default function PaymentModal({ open, onClose,paying }) {
               placeholder="CVC"
               value={cvc}
               onChange={(e) => setCvc(e.target.value)}
-              className="flex-1 border rounded-lg p-3 focus:outline-none focus:ring"
+              className="w-full md:flex-1 border rounded-lg p-3 focus:outline-none focus:ring"
               required
             />
           </div>
@@ -53,12 +51,12 @@ export default function PaymentModal({ open, onClose,paying }) {
             type="submit"
             className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg py-3 font-semibold transition"
           >
-          {paying ? "Paying...":"Confirm Payment"}  
+            {paying ? "Paying..." : "Confirm Payment"}
           </button>
 
           <button
             type="button"
-            onClick={() => onClose(false)} // closed without paying
+            onClick={() => onClose(false)}
             className="w-full mt-2 text-gray-600 underline"
           >
             Cancel

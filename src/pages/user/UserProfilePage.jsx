@@ -73,23 +73,46 @@ const UserProfilePage = () => {
     </div>
   );
 
+  const renderProfileTypeField = () => (
+    <div>
+      <label className="block text-sm font-medium text-gray-600 mb-1">Profile Type</label>
+      {editable ? (
+        <select
+          name="profileType"
+          className="w-full p-3 border rounded bg-gray-50 text-base"
+          value={profile.profileType || "Buyer"}
+          onChange={handleChange}
+        >
+          <option value="Buyer">Buyer</option>
+          <option value="Seller">Seller</option>
+          <option value="Both">Both</option>
+        </select>
+      ) : (
+        <p className="p-3 bg-gray-50 border rounded text-base">{profile.profileType || "Buyer"}</p>
+      )}
+    </div>
+  );
+
   return (
     <div 
-    className="mx-[130px] p-10 mt-10 bg-white rounded-xl shadow-lg border border-gray-200"
+      className="mx-4 md:mx-[130px] p-6 md:p-10 mt-6 md:mt-10 bg-white rounded-xl shadow-lg border border-gray-200"
     >
       {/* Profile Picture and Name */}
-      <div className="flex flex-col items-center mb-10">
+      <div className="flex flex-col items-center mb-8">
         <img
           src={profile.profilePictureUrl}
           alt="Profile"
-          className="w-44 h-44 object-cover border border-gray-300 rounded"
+          className="w-28 h-28 md:w-44 md:h-44 object-cover border border-gray-300 rounded"
         />
-        <h2 className="text-3xl font-bold mt-4">{profile.firstName} {profile.lastName}</h2>
-        <p className="text-gray-600 text-lg">{profile.email}</p>
+        <h2 className="text-2xl md:text-3xl font-bold mt-4 text-center">
+          {profile.firstName} {profile.lastName}
+        </h2>
+        <p className="text-gray-600 text-base md:text-lg text-center">{profile.email}</p>
       </div>
 
       {/* Profile Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-lg">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 text-base md:text-lg">
+        {renderProfileTypeField()}
         {renderField("First Name", "firstName")}
         {renderField("Middle Name", "middleName")}
         {renderField("Last Name", "lastName")}
@@ -102,12 +125,12 @@ const UserProfilePage = () => {
       </div>
 
       {/* Buttons */}
-      <div className="flex justify-between mt-12">
+      <div className="flex flex-col md:flex-row justify-between gap-4 mt-10">
         <button
           onClick={() => setEditable(!editable)}
           className={`px-6 py-3 text-white font-semibold rounded ${
             editable ? "bg-gray-500 hover:bg-gray-600" : "bg-blue-600 hover:bg-blue-700"
-          } transition`}
+          } transition w-full md:w-auto`}
         >
           {editable ? "Cancel" : "Edit Profile"}
         </button>
@@ -116,7 +139,7 @@ const UserProfilePage = () => {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-3 rounded transition text-lg"
+            className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-3 rounded transition text-lg w-full md:w-auto"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>

@@ -8,6 +8,7 @@ import { useConfig } from "wagmi";
 import { subscriptionContract } from "../../config";
 import toast from "react-hot-toast";
 import ChatWindow from "../../components/ChatWindow";
+import { uid } from "@wagmi/core/internal";
 
 export default function OrderDetailsPage() {
   const config = useConfig();
@@ -63,7 +64,6 @@ export default function OrderDetailsPage() {
       const adminFee = price * 0.05;
       const sellerEarnings = price - adminFee;
 
-      // Blockchain logic (if crypto-enabled)
       if (order.cryptoEnabled) {
         let subscribeHash = await writeContract(config, {
           ...subscriptionContract,
@@ -73,10 +73,8 @@ export default function OrderDetailsPage() {
         await waitForTransactionReceipt(config, { hash: subscribeHash });
       }
 
-      // Update order status
       await updateDoc(doc(db, "orders", order.id), { status: "Accepted but not paid" });
 
-      // Add seller earnings record
       await addDoc(collection(db, "earnings"), {
         sellerId: order.sellerId,
         orderId: order.id,
@@ -87,7 +85,6 @@ export default function OrderDetailsPage() {
         createdAt: serverTimestamp(),
       });
 
-      // Add admin fee record
       await addDoc(collection(db, "adminFees"), {
         orderId: order.id,
         feeAmount: adminFee,
@@ -106,23 +103,13 @@ export default function OrderDetailsPage() {
 
   if (!order) return <p className="p-10">Loading order...</p>;
 
+  console.log("first",user.uid,order)
+
   return (
-    <div className="flex bg-gray-100 min-h-screen">
-      <div className="flex-1 p-10">
-        <h1 className="text-2xl font-bold text-center mb-6">Order ID: {order.id}</h1>
-        {/* Order Details */}
-        {/* ... (rest of your UI unchanged) ... */}
-
-        {/* Chat Section */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Chat</h2>
-          <ChatWindow orderId={order.id} buyerId={order.buyerId} sellerId={order.sellerId} currentUserId={user.uid} />
-        </div>
-      </div>
-
-      {/* Sidebar */}
-      <div className="w-80 bg-white p-6 shadow-lg border-l">
-        <div className="mb-6">
+    <div className="flex flex-col md:flex-row bg-gray-100 min-h-screen">
+      {/* Sidebar (Status + Actions) - on top for mobile */}
+      <div className="w-full md:w-80 bg-white p-6 shadow-lg border-b md:border-b-0 md:border-l">
+        <div className="mb-6 text-center md:text-left">
           <h3 className="text-lg font-bold mb-2">Order Status</h3>
           <p className="text-green-600 font-semibold text-xl">{order.status}</p>
         </div>
@@ -141,7 +128,7 @@ export default function OrderDetailsPage() {
           </button>
         )}
 
-        {user.uid === order.buyerId && order.status !== "Accepted but not paid" && (
+        {user.uid === order.buyerId && order.status !== "Accepted but not paid" && order.status === "submitted" && (
           <button
             onClick={handleAcceptWork}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded mb-4 cursor-pointer"
@@ -150,7 +137,28 @@ export default function OrderDetailsPage() {
           </button>
         )}
 
-        <button className="w-full bg-red-500 text-white py-2 px-4 rounded cursor-pointer">Raise Conflict</button>
+        <button className="w-full bg-red-500 text-white py-2 px-4 rounded cursor-pointer">
+          Raise Conflict
+        </button>
+      </div>
+
+      {/* Main Content (Order Details + Chat) */}
+      <div className="flex-1 p-6 md:p-10">
+        <h1 className="text-2xl font-bold text-center mb-6">Order ID: {order.id}</h1>
+        
+        {/* Placeholder for order details (add your own details here) */}
+        <div className="bg-white p-6 rounded-lg shadow mb-6">
+          <h2 className="text-lg font-semibold mb-4">Order Details</h2>
+          <p><strong>Buyer:</strong> {buyerProfile?.firstName} {buyerProfile?.lastName}</p>
+          <p><strong>Seller:</strong> {sellerProfile?.firstName} {sellerProfile?.lastName}</p>
+          <p><strong>Price:</strong> ${order.packageDetails?.price}</p>
+        </div>
+
+        {/* Chat Section */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">Chat</h2>
+          <ChatWindow orderId={order.id} buyerId={order.buyerId} sellerId={order.sellerId} currentUserId={user.uid} />
+        </div>
       </div>
     </div>
   );
