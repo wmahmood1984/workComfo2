@@ -128,64 +128,100 @@ export default function GigGallery({ formData, setFormData, onSubmit, onBack }) 
   console.log("form data",formData)
 
   return (
-    <div className="p-6 bg-white rounded shadow-md space-y-4">
-      <h2 className="text-xl font-semibold text-green-600">Upload Gig Media</h2>
+   <div className="p-6 bg-white rounded-2xl shadow-lg space-y-6">
+  <h2 className="text-2xl font-bold text-green-600">Upload Gig Media</h2>
 
-      <div>
-        <label className="block font-medium mb-1">Upload Images (max 3)</label>
-        <input type="file" accept="image/*" multiple onChange={handleImageUpload} />
-        <div className="flex gap-4 mt-2">
-          {images.map((img, idx) => (
-            <div key={idx} className="relative">
-              <img
-                src={URL.createObjectURL(img)}
-                alt={`preview-${idx}`}
-                className="w-24 h-24 object-cover rounded"
-              />
-              <button
-                onClick={() => removeImage(idx)}
-                className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5"
-              >
-                ×
-              </button>
-            </div>
-          ))}
+  {/* Image Upload */}
+  <div>
+    <label className="block font-medium text-gray-700 mb-2">
+      Upload Images <span className="text-sm text-gray-500">(max 3)</span>
+    </label>
+    <input
+      type="file"
+      accept="image/*"
+      multiple
+      onChange={handleImageUpload}
+      className="block w-full text-sm text-gray-500 
+                 file:mr-4 file:py-2 file:px-4
+                 file:rounded-lg file:border-0
+                 file:text-sm file:font-semibold
+                 file:bg-green-50 file:text-green-600
+                 hover:file:bg-green-100"
+    />
+
+    <div className="flex flex-wrap gap-4 mt-4">
+      {images.map((img, idx) => (
+        <div
+          key={idx}
+          className="relative w-28 h-28 border rounded-lg overflow-hidden shadow-sm"
+        >
+          <img
+            src={URL.createObjectURL(img)}
+            alt={`preview-${idx}`}
+            className="w-full h-full object-cover"
+          />
+          <button
+            onClick={() => removeImage(idx)}
+            className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center"
+          >
+            ×
+          </button>
         </div>
-      </div>
-
-      <div>
-        <label className="block font-medium mb-1">Upload Video (MP4 only)</label>
-        <input type="file" accept="video/mp4" onChange={handleVideoUpload} />
-        {video && (
-          <div className="mt-2 relative">
-            <video src={URL.createObjectURL(video)} controls className="w-full max-w-sm" />
-            <button
-              onClick={removeVideo}
-              className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5"
-            >
-              ×
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="flex justify-between mt-6">
-        <button
-          onClick={onBack}
-          className="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
-        >
-          Back
-        </button>
-        <button
-          onClick={async () => {
-            await handleUploadToStorage();
-          }}
-          disabled={uploading}
-          className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-50"
-        >
-          {uploading ? "Uploading..." : "Continue"}
-        </button>
-      </div>
+      ))}
     </div>
+  </div>
+
+  {/* Video Upload */}
+  <div>
+    <label className="block font-medium text-gray-700 mb-2">
+      Upload Video <span className="text-sm text-gray-500">(MP4 only)</span>
+    </label>
+    <input
+      type="file"
+      accept="video/mp4"
+      onChange={handleVideoUpload}
+      className="block w-full text-sm text-gray-500 
+                 file:mr-4 file:py-2 file:px-4
+                 file:rounded-lg file:border-0
+                 file:text-sm file:font-semibold
+                 file:bg-green-50 file:text-green-600
+                 hover:file:bg-green-100"
+    />
+
+    {video && (
+      <div className="mt-4 relative w-full max-w-sm border rounded-lg overflow-hidden shadow-sm">
+        <video
+          src={URL.createObjectURL(video)}
+          controls
+          className="w-full h-48 object-cover"
+        />
+        <button
+          onClick={removeVideo}
+          className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center"
+        >
+          ×
+        </button>
+      </div>
+    )}
+  </div>
+
+  {/* Navigation */}
+  <div className="flex justify-between pt-4">
+    <button
+      onClick={onBack}
+      className="bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200"
+    >
+      Back
+    </button>
+    <button
+      onClick={async () => await handleUploadToStorage()}
+      disabled={uploading}
+      className="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 disabled:opacity-50"
+    >
+      {uploading ? "Uploading..." : "Continue"}
+    </button>
+  </div>
+</div>
+
   );
 }

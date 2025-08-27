@@ -33,69 +33,84 @@ export default function PricingStep({ formData, setFormData, onBack, onNext }) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-green-600">Pricing</h2>
-      <p className="text-gray-600">
-        Set up to three packages: Basic, Standard, and Premium — each with its own price, delivery time, and number of revisions. 
-        {/* :contentReference[oaicite:1]{index=1} */}
-      </p>
+  {/* Heading */}
+  <h2 className="text-2xl font-bold text-green-600">Pricing</h2>
+  <p className="text-gray-600 text-sm md:text-base">
+    Set up to three packages: Basic, Standard, and Premium — each with its own
+    price, delivery time, and number of revisions.
+  </p>
 
-      {tiers.map(tier => (
-        <div key={tier.key} className="p-4 border rounded space-y-4">
-          <h3 className="text-lg font-semibold">{tier.label} Package</h3>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium">Price (USD)</label>
-              <input
-                type="number" min="1"
-                placeholder="e.g. 50"
-                value={packages[tier.key]?.price || ''}
-                onChange={e => updatePkg(tier.key, 'price', e.target.value)}
-                className="mt-1 w-full border border-gray-300 rounded px-3 py-2 focus:ring-green-300"
-                required
-              />
-            </div>
+  {/* Package Cards */}
+  {tiers.map((tier) => (
+    <div
+      key={tier.key}
+      className="p-4 border rounded-lg shadow-sm space-y-4"
+    >
+      <h3 className="text-lg font-semibold">{tier.label} Package</h3>
 
-            <div>
-              <label className="text-sm font-medium">Delivery Time (days)</label>
-              <input
-                type="number" min="1"
-                placeholder="e.g. 3"
-                value={packages[tier.key]?.days || ''}
-                onChange={e => updatePkg(tier.key, 'days', e.target.value)}
-                className="mt-1 w-full border border-gray-300 rounded px-3 py-2 focus:ring-green-300"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Revisions</label>
-              <input
-                type="number" min="0"
-                placeholder="e.g. 2"
-                value={packages[tier.key]?.revisions || ''}
-                onChange={e => updatePkg(tier.key, 'revisions', e.target.value)}
-                className="mt-1 w-full border border-gray-300 rounded px-3 py-2 focus:ring-green-300"
-                required
-              />
-            </div>
-          </div>
+      {/* Inputs grid → 1 col on mobile, 3 cols on desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Price */}
+        <div>
+          <label className="text-sm font-medium">Price (USD)</label>
+          <input
+            type="number"
+            min="1"
+            placeholder="e.g. 50"
+            value={packages[tier.key]?.price || ""}
+            onChange={(e) => updatePkg(tier.key, "price", e.target.value)}
+            className="mt-1 w-full border border-gray-300 rounded px-3 py-2 focus:ring-green-300"
+            required
+          />
         </div>
-      ))}
 
-      <div className="flex justify-between mt-6">
-        <button
-          onClick={onBack}
-          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-        >
-          Previous
-        </button>
-        <button
-          onClick={onNext}
-          className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-        >
-          Next: Description
-        </button>
+        {/* Delivery Time */}
+        <div>
+          <label className="text-sm font-medium">Delivery Time (days)</label>
+          <input
+            type="number"
+            min="1"
+            placeholder="e.g. 3"
+            value={packages[tier.key]?.days || ""}
+            onChange={(e) => updatePkg(tier.key, "days", e.target.value)}
+            className="mt-1 w-full border border-gray-300 rounded px-3 py-2 focus:ring-green-300"
+            required
+          />
+        </div>
+
+        {/* Revisions */}
+        <div>
+          <label className="text-sm font-medium">Revisions</label>
+          <input
+            type="number"
+            min="0"
+            placeholder="e.g. 2"
+            value={packages[tier.key]?.revisions || ""}
+            onChange={(e) => updatePkg(tier.key, "revisions", e.target.value)}
+            className="mt-1 w-full border border-gray-300 rounded px-3 py-2 focus:ring-green-300"
+            required
+          />
+        </div>
       </div>
     </div>
+  ))}
+
+  {/* Navigation Buttons */}
+  <div className="flex flex-col md:flex-row justify-between gap-3 mt-6">
+    <button
+      onClick={onBack}
+      className="w-full md:w-auto px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+    >
+      Previous
+    </button>
+    <button
+      onClick={onNext}
+      className="w-full md:w-auto px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+    >
+      Next: Description
+    </button>
+  </div>
+</div>
+
   );
 }

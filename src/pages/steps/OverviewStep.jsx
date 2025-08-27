@@ -316,166 +316,171 @@ const handleCrypto = () => {
 
 
   return (
-    <div className="p-6 bg-white rounded shadow space-y-6">
-      {/* Title Field */}
-      <div>
-        <label className="block font-semibold">Gig Title</label>
-        <input
-          type="text"
-          maxLength={80}
-          value={formData.title}
-          onChange={(e) =>
-            setFormData((f) => ({ ...f, title: e.target.value }))
-          }
-          placeholder="I will build your Web3 landing page"
-          className="mt-1 w-full border border-gray-300 rounded px-3 py-2 focus:ring-green-300"
-          required
-        />
-        <p className="mt-1 text-sm text-gray-500">
-          As your Gig storefront, your title is the most important place to
-          include keywords that buyers will use. 0 / 80 max.
-        </p>
-      </div>
+    <div className="p-4 md:p-6 bg-white rounded shadow space-y-6">
+  {/* Title Field */}
+  <div>
+    <label className="block font-semibold">Gig Title</label>
+    <input
+      type="text"
+      maxLength={80}
+      value={formData.title}
+      onChange={(e) =>
+        setFormData((f) => ({ ...f, title: e.target.value }))
+      }
+      placeholder="I will build your Web3 landing page"
+      className="mt-1 w-full border border-gray-300 rounded px-3 py-2 focus:ring-green-300"
+      required
+    />
+    <p className="mt-1 text-sm text-gray-500">
+      As your Gig storefront, your title is the most important place to
+      include keywords that buyers will use. 0 / 80 max.
+    </p>
+  </div>
 
-      <FormControlLabel
-        control={
-          <Switch
-            checked={cryptoEnabled}
-            onChange={handleCrypto}
-            color="success"
-          />
-        }
-        label={
-          <Typography variant="h6" fontWeight="bold">
-            Accept Crypto Payments?
-          </Typography>
-        }
-        labelPlacement="start"
+  {/* Crypto Switch */}
+  <FormControlLabel
+    control={
+      <Switch
+        checked={cryptoEnabled}
+        onChange={handleCrypto}
+        color="success"
       />
+    }
+    label={
+      <Typography variant="h6" fontWeight="bold">
+        Accept Crypto Payments?
+      </Typography>
+    }
+    labelPlacement="start"
+  />
 
-      {/* Category Selection */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block font-semibold">Category</label>
-          <select
-            value={formData.category}
-            onChange={(e) =>
-              setFormData((f) => ({
-                ...f,
-                category: e.target.value,
-                subcategory: "",
-              }))
-            }
-            className="mt-1 w-full border border-gray-300 rounded px-3 py-2 focus:ring-green-300"
-            required
-          >
-            <option value="">Select a category</option>
-            {Object.keys(categories).map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </div>
+  {/* Category Selection */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block font-semibold">Category</label>
+      <select
+        value={formData.category}
+        onChange={(e) =>
+          setFormData((f) => ({
+            ...f,
+            category: e.target.value,
+            subcategory: "",
+          }))
+        }
+        className="mt-1 w-full border border-gray-300 rounded px-3 py-2 focus:ring-green-300"
+        required
+      >
+        <option value="">Select a category</option>
+        {Object.keys(categories).map((cat) => (
+          <option key={cat} value={cat}>
+            {cat}
+          </option>
+        ))}
+      </select>
+    </div>
 
-        <div>
-          <label className="block font-semibold">Subcategory</label>
-          <select
-            value={formData.subcategory}
-            onChange={(e) =>
-              setFormData((f) => ({ ...f, subcategory: e.target.value }))
-            }
-            className="mt-1 w-full border border-gray-300 rounded px-3 py-2 focus:ring-green-300"
-            required
-            disabled={!formData.category}
-          >
-            <option value="">Select a subcategory</option>
-            {formData.category &&
-              categories[formData.category].map((sub) => (
-                <option key={sub} value={sub}>
-                  {sub}
-                </option>
-              ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Search Tags */}
-      <div>
-        <label className="block font-semibold">Search tags</label>
-        <p className="text-sm text-gray-500 mb-2">
-          Tag your Gig with buzzwords relevant to your service. Up to 5 tags to
-          improve discoverability. Use a mix of broad and specific terms.
-          :contentReference[oaicite:1]{1}
-        </p>
-        <div className="flex gap-2 flex-wrap mb-2">
-          {formData.tags.map((tag) => (
-            <span
-              key={tag}
-              className="bg-green-100 text-green-800 px-2 py-1 rounded inline-flex items-center"
-            >
-              {tag}
-              <button
-                type="button"
-                onClick={() => removeTag(tag)}
-                className="ml-1 text-green-600 hover:text-green-800"
-              >
-                &times;
-              </button>
-            </span>
+    <div>
+      <label className="block font-semibold">Subcategory</label>
+      <select
+        value={formData.subcategory}
+        onChange={(e) =>
+          setFormData((f) => ({ ...f, subcategory: e.target.value }))
+        }
+        className="mt-1 w-full border border-gray-300 rounded px-3 py-2 focus:ring-green-300"
+        required
+        disabled={!formData.category}
+      >
+        <option value="">Select a subcategory</option>
+        {formData.category &&
+          categories[formData.category].map((sub) => (
+            <option key={sub} value={sub}>
+              {sub}
+            </option>
           ))}
-        </div>
-        <div className="flex">
-          <input
-            type="text"
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={(e) =>
-              e.key === "Enter" && (e.preventDefault(), addTag())
-            }
-            placeholder="E.g. web3, landing page"
-            className="flex-1 border border-gray-300 rounded-l px-3 py-2 focus:ring-green-300"
-          />
+      </select>
+    </div>
+  </div>
+
+  {/* Search Tags */}
+  <div>
+    <label className="block font-semibold">Search tags</label>
+    <p className="text-sm text-gray-500 mb-2">
+      Tag your Gig with buzzwords relevant to your service. Up to 5 tags to
+      improve discoverability. Use a mix of broad and specific terms.
+    </p>
+
+    {/* Tag List */}
+    <div className="flex gap-2 flex-wrap mb-2">
+      {formData.tags.map((tag) => (
+        <span
+          key={tag}
+          className="bg-green-100 text-green-800 px-2 py-1 rounded inline-flex items-center"
+        >
+          {tag}
           <button
             type="button"
-            onClick={addTag}
-            className="bg-green-600 text-white px-4 rounded-r hover:bg-green-700"
+            onClick={() => removeTag(tag)}
+            className="ml-1 text-green-600 hover:text-green-800"
           >
-            Add
+            &times;
           </button>
-        </div>
-      </div>
-
-      {/* Negative Keywords Placeholder */}
-      <div>
-        <label className="block font-semibold">
-          Negative keywords{" "}
-          <span className="text-sm text-gray-500">(Premium)</span>
-        </label>
-        <p className="text-sm text-gray-500 mb-2">
-          Prevent your Gig from matching irrelevant terms. Available for future
-          Premium users.
-        </p>
-        <input
-          type="text"
-          disabled
-          placeholder="Tell me more"
-          className="mt-1 w-full border border-gray-200 bg-gray-100 rounded px-3 py-2 cursor-not-allowed"
-        />
-      </div>
-
-      {/* Navigation */}
-      <div className="flex justify-end">
-        <button
-          onClick={onNext}
-          disabled={
-            !formData.title || !formData.category || !formData.subcategory
-          }
-          className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-50"
-        >
-          Save & Continue
-        </button>
-      </div>
+        </span>
+      ))}
     </div>
+
+    {/* Tag Input */}
+    <div className="flex flex-col sm:flex-row">
+      <input
+        type="text"
+        value={tagInput}
+        onChange={(e) => setTagInput(e.target.value)}
+        onKeyDown={(e) =>
+          e.key === "Enter" && (e.preventDefault(), addTag())
+        }
+        placeholder="E.g. web3, landing page"
+        className="flex-1 border border-gray-300 rounded-t sm:rounded-l sm:rounded-tr-none px-3 py-2 focus:ring-green-300"
+      />
+      <button
+        type="button"
+        onClick={addTag}
+        className="bg-green-600 text-white px-4 py-2 rounded-b sm:rounded-r sm:rounded-bl-none hover:bg-green-700"
+      >
+        Add
+      </button>
+    </div>
+  </div>
+
+  {/* Negative Keywords Placeholder */}
+  <div>
+    <label className="block font-semibold">
+      Negative keywords{" "}
+      <span className="text-sm text-gray-500">(Premium)</span>
+    </label>
+    <p className="text-sm text-gray-500 mb-2">
+      Prevent your Gig from matching irrelevant terms. Available for future
+      Premium users.
+    </p>
+    <input
+      type="text"
+      disabled
+      placeholder="Tell me more"
+      className="mt-1 w-full border border-gray-200 bg-gray-100 rounded px-3 py-2 cursor-not-allowed"
+    />
+  </div>
+
+  {/* Navigation */}
+  <div className="flex justify-end md:justify-between">
+    <button
+      onClick={onNext}
+      disabled={
+        !formData.title || !formData.category || !formData.subcategory
+      }
+      className="w-full md:w-auto bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+    >
+      Save & Continue
+    </button>
+  </div>
+</div>
+
   );
 }

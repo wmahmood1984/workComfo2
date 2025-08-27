@@ -1,38 +1,63 @@
-// src/store/slices/usersSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import toast from "react-hot-toast";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
+// Fetch existing profile
 export const fetchUserProfile = createAsyncThunk(
-  "users/fetchUserProfile",
-  async (userId) => {
-    const ref = doc(db, "users", userId);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error("User not found");
-    return { userId, data: snap.data() };
+  "profile/fetchUserProfile",
+  async (uid, { rejectWithValue }) => {
+    try {
+      const docRef = doc(db, "users", uid);
+      const docSnap = await getDoc(docRef);
+      return docSnap.exists() ? docSnap.data() : null;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
   }
 );
 
-// **NEW**: Update profile
+// Create profile
+export const createUserProfile = createAsyncThunk(
+  "profile/createUserProfile",
+  async ({ uid, profileData }, { rejectWithValue }) => {
+    try {
+      const docRef = doc(db, "users", uid);
+      await setDoc(docRef, profileData);
+      return profileData; // update Redux immediately
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Update profile
 export const updateUserProfile = createAsyncThunk(
-  "users/updateUserProfile",
-  async ({ userId, data }) => {
-    await setDoc(doc(db, "users", userId), data, { merge: true });
-    toast.success("Profile updated!");
-    return { userId, data };
+  "profile/updateUserProfile",
+  async ({ uid, updates }, { rejectWithValue }) => {
+    try {
+      const docRef = doc(db, "users", uid);
+      await updateDoc(docRef, updates);
+      return updates; // merge into Redux state
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
   }
 );
 
-const usersSlice = createSlice({
-  name: "users",
+const profileSlice = createSlice({
+  name: "profile",
   initialState: {
-    profiles: {}, // { userId: { firstName, lastName, ... } }
+    data: null,
     loading: false,
-    saving: false,
     error: null,
   },
-  reducers: {},
+  reducers: {
+    clearProfile: (state) => {
+      state.data = null;
+      state.loading = false;
+      state.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       // Fetch
@@ -41,28 +66,22 @@ const usersSlice = createSlice({
       })
       .addCase(fetchUserProfile.fulfilled, (state, action) => {
         state.loading = false;
-        state.profiles[action.payload.userId] = action.payload.data;
+        state.data = action.payload;
       })
       .addCase(fetchUserProfile.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload;
+      })
+      // Create
+      .addCase(createUserProfile.fulfilled, (state, action) => {
+        state.data = action.payload;
       })
       // Update
-      .addCase(updateUserProfile.pending, (state) => {
-        state.saving = true;
-      })
       .addCase(updateUserProfile.fulfilled, (state, action) => {
-        state.saving = false;
-        state.profiles[action.payload.userId] = {
-          ...state.profiles[action.payload.userId],
-          ...action.payload.data,
-        };
-      })
-      .addCase(updateUserProfile.rejected, (state, action) => {
-        state.saving = false;
-        state.error = action.error.message;
+        state.data = { ...state.data, ...action.payload };
       });
   },
 });
 
-export default usersSlice.reducer;
+export const { clearProfile } = profileSlice.actions;
+export default profileSlice.reducer;
